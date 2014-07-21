@@ -17,7 +17,7 @@ void main(List<String> args) {
 
   target("default", [FILELIST], (Target t, Map args) {
     print("All done.");
-  });
+  }, description: "Create list of Dart files used in packages");
 
   new BuildShell().run(args).then((exitCode) => exit(exitCode));
 }

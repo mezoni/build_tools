@@ -3,7 +3,13 @@ build_tools
 
 Build tools is build automation tool.
 
-You can use the built-in command line shell, write your own or do not use any shells.
+Build tools includes libraries `build_tools` and `build_shell`.
+
+The `build_tools` is a main library and used for specifying the targets, rules and files used in the project.
+
+The `build_shell` library can be  used for working with your project from the command line shell.
+
+You can use the `build_shell` or you can write your own shell or do not use any shells at all and build the project programmatically.
 
 Without using the command line shell the configuration is performed directly in the source code.
 
@@ -28,7 +34,7 @@ void main() {
 
   target("default", [FILELIST], (Target t, Map args) {
     print("All done.");
-  });
+  }, description: "Create list of Dart files used in packages");
 
   var builder = Builder.current;
   // Take into account modification date of this script.
@@ -60,7 +66,7 @@ void main(List<String> args) {
 
   target("default", [FILELIST], (Target t, Map args) {
     print("All done.");
-  });
+  }, description: "Create list of Dart files used in packages");
 
   new BuildShell().run(args).then((exitCode) => exit(exitCode));
 }

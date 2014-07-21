@@ -16,7 +16,7 @@ void main() {
 
   target("default", [FILELIST], (Target t, Map args) {
     print("All done.");
-  });
+  }, description: "Create list of Dart files used in packages");
 
   var builder = Builder.current;
   // Take into account modification date of this script.

@@ -10,7 +10,7 @@ class Builder {
   static final Builder current = new Builder();
 
   /**
-   * Arguments of main target.
+   * Arguments of the main target.
    */
   Map<String, dynamic> arguments = <String, dynamic> {};
 

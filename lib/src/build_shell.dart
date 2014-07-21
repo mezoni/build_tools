@@ -1,11 +1,17 @@
 part of build_shell;
 
+/**
+ * Build shell.
+ */
 class BuildShell {
   ArgParser _argParser;
   Map<String, dynamic> _arguments;
   int _exitCode;
   String _targetName;
 
+  /**
+   * Runs the build shell, builds the target and returns exit code.
+   */
   Future<int> run(List<String> arguments) {
     return _run(arguments);
   }
@@ -29,12 +35,36 @@ class BuildShell {
 
   void _displayTargetList() {
     print("List of available targets:");
+    var builder = Builder.current;
+    var defaultIncluded = false;
+    var defaultTarget = builder.defaultTarget;
     var targets = <List<String>>[];
     var maxLength = 0;
-    for (var target in Builder.current.targets.values) {
+    for (var target in builder.targets.values) {
       if (target.description != null) {
         var name = target.name;
         targets.add([name, target.description]);
+        var length = name.length;
+        if (maxLength < length) {
+          maxLength = length;
+        }
+
+        if (name == defaultTarget) {
+          defaultIncluded = true;
+        }
+      }
+    }
+
+    if (!defaultIncluded) {
+      var target = builder.targets[defaultTarget];
+      if (target != null) {
+        var description = target.description;
+        var name = target.name;
+        if (description == null) {
+          description = "";
+        }
+
+        targets.add([name, description]);
         var length = name.length;
         if (maxLength < length) {
           maxLength = length;
@@ -44,11 +74,16 @@ class BuildShell {
 
     targets.sort((a, b) => a[0].compareTo(b[0]));
     for (var target in targets) {
+      var indent = "  ";
       var name = target[0];
       var description = target[1];
       var length = name.length;
       var pad = "".padRight(maxLength - length, " ");
-      print("  $name$pad   $description");
+      if (name == defaultTarget) {
+        indent = indent.substring(0, indent.length - 1) + "*";
+      }
+
+      print("$indent$name$pad   $description");
     }
   }
 
