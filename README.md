@@ -1,15 +1,13 @@
 build_tools
 ===========
 
-Build tools is build automation tool.
+Build tools is a build automation tool with a built-in command line shell.
 
 Build tools includes libraries `build_tools` and `build_shell`.
 
 The `build_tools` is a main library and used for specifying the targets, rules and files used in the project.
 
 The `build_shell` library can be  used for working with your project from the command line shell.
-
-You can use the `build_shell` or you can write your own shell or do not use any shells at all and build the project programmatically.
 
 Without using the command line shell the configuration is performed directly in the source code.
 
