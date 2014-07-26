@@ -69,3 +69,7 @@ void main(List<String> args) {
   new BuildShell().run(args).then((exitCode) => exit(exitCode));
 }
 ```
+
+[Example of usage `build_tools` for bulding the Dart VM C++ native extension.][native_extension_with_build_tools]
+
+[native_extension_with_build_tools]: https://github.com/mezoni/native_extension_with_build_tools
