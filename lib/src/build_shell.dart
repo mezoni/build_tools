@@ -1,4 +1,4 @@
-part of build_shell;
+part of build_utils.build_shell;
 
 /**
  * Build shell.
@@ -159,21 +159,12 @@ class BuildShell {
         var value = rest[0];
         if (!value.startsWith("--")) {
           rest.removeAt(0);
-          var number = num.parse(value, (input) => null);
-          if (number != null) {
-            value = number;
-          } else if (value.toLowerCase() == "false") {
-            value = false;
-          } else if (value.toLowerCase() == "true") {
-            value = true;
-          }
-
           _arguments[key] = value;
         } else {
-          _arguments[key] = true;
+          _arguments[key] = null;
         }
       } else {
-        _arguments[key] = true;
+        _arguments[key] = null;
       }
     }
 

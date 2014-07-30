@@ -1,4 +1,4 @@
-library build_shell;
+library build_utils.build_shell;
 
 import "dart:async";
 import "dart:io";
