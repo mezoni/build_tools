@@ -1,6 +1,52 @@
 part of build_tools;
 
 /**
+ * Adds the "after" action to specified targets.
+ */
+void after(List<String> targets, TargetAction action) {
+  if (targets == null) {
+    throw new ArgumentError("targets: $targets");
+  }
+
+  if (action == null) {
+    throw new ArgumentError("action: $action");
+  }
+
+  var builder = Builder.current;
+  for (var name in targets) {
+    var target = builder.targets[name];
+    if (target == null) {
+      throw new ArgumentError("Target not found: $target");
+    }
+
+    target._actionsAfter.add(action);
+  }
+}
+
+/**
+ * Adds the "before" action to specified targets.
+ */
+void before(List<String> targets, TargetAction action) {
+  if (targets == null) {
+    throw new ArgumentError("targets: $targets");
+  }
+
+  if (action == null) {
+    throw new ArgumentError("action: $action");
+  }
+
+  var builder = Builder.current;
+  for (var name in targets) {
+    var target = builder.targets[name];
+    if (target == null) {
+      throw new ArgumentError("Target not found: $target");
+    }
+
+    target._actionsBefore.add(action);
+  }
+}
+
+/**
  * Creates the target.
  */
 void target(String name, Iterable<String> sources, TargetAction action, {String
@@ -36,6 +82,10 @@ class Target {
 
   List<TargetAction> _actions;
 
+  List<TargetAction> _actionsAfter;
+
+  List<TargetAction> _actionsBefore;
+
   bool _building;
 
   DateTime _date;
@@ -55,6 +105,8 @@ class Target {
     }
 
     _actions = <TargetAction>[];
+    _actionsAfter = <TargetAction>[];
+    _actionsBefore = <TargetAction>[];
     _sources = <String>[];
     _building = false;
     _reusable = reusable;
@@ -68,10 +120,24 @@ class Target {
   }
 
   /**
-   * Returns the target actions.
+   * Returns the actions.
    */
   Iterable<TargetAction> get actions {
     return new UnmodifiableListView<TargetAction>(_actions);
+  }
+
+  /**
+   * Returns the "after" actions.
+   */
+  Iterable<TargetAction> get actionsAfter {
+    return new UnmodifiableListView<TargetAction>(_actionsAfter);
+  }
+
+  /**
+   * Returns the "before" actions.
+   */
+  Iterable<TargetAction> get actionsBefore {
+    return new UnmodifiableListView<TargetAction>(_actionsBefore);
   }
 
   /**
@@ -97,7 +163,7 @@ class Target {
     }
 
     var builder = Builder.current;
-    if(!sources.isEmpty) {
+    if (!sources.isEmpty) {
       if (builder.scriptDate != null) {
         if (date.compareTo(builder.scriptDate) < 0) {
           return false;
@@ -146,7 +212,46 @@ class Target {
   /**
    * Executes the target actions.
    */
-  Future<int> executeActions(Map<String, dynamic> arguments) {
+  Future<int> executeActions(List<TargetAction> actions, Map<String, dynamic>
+      arguments) {
+    return new Future<int>(() {
+      if (arguments == null) {
+        arguments = <String, dynamic> {};
+      }
+
+      var exitCode = 0;
+      var checkExitCode = (dynamic result) {
+        if (result is int && result != 0) {
+          logError("Target action failed ($result): '$name'");
+          exitCode = result;
+          return false;
+        }
+
+        return true;
+      };
+
+      return _FutureHelper.forEach(actions, (TargetAction action) {
+        return new Future<bool>(() {
+          var result = action(this, arguments);
+          if (result is Future) {
+            return result.then((result) {
+              return checkExitCode(result);
+            });
+          } else {
+            return checkExitCode(result);
+          }
+        });
+      }).then((result) {
+        return exitCode;
+      });
+    });
+  }
+
+  /**
+   * Executes the target actions.
+   */
+  // TODO: remove
+  Future<int> executeActions_Old(Map<String, dynamic> arguments) {
     return new Future<int>(() {
       if (arguments == null) {
         arguments = <String, dynamic> {};
@@ -207,38 +312,49 @@ class Target {
 
       _building = true;
       var exitCode = 0;
-      return _FutureHelper.forEach(sources, (String name) {
-        return new Future<bool>(() {
-          var target = builder.resolveTarget(name);
-          if (target == null) {
-            logError("Cannot resolve target: '$name'");
-            exitCode = -1;
-            // Break loop
-            return false;
-          }
-
-          return target.build().then((int result) {
-            exitCode = result;
-            if (exitCode != 0) {
-              // Break loop
-              return false;
-            }
-          });
-        });
-      }).then((result) {
+      return executeActions(actionsBefore, arguments).then((int exitCode) {
         if (exitCode != 0) {
           return exitCode;
         }
 
-        return executeActions(arguments).then((int exitCode) {
-          if (_reusable) {
-            reset();
-          } else {
-            _date = new DateTime.now();
+        return _FutureHelper.forEach(sources, (String name) {
+          return new Future<bool>(() {
+            var target = builder.resolveTarget(name);
+            if (target == null) {
+              logError("Cannot resolve target: '$name'");
+              exitCode = -1;
+              // Break loop
+              return false;
+            }
+
+            return target.build().then((int result) {
+              exitCode = result;
+              if (exitCode != 0) {
+                // Break loop
+                return false;
+              }
+            });
+          });
+        }).then((result) {
+          if (exitCode != 0) {
+            return exitCode;
           }
 
-          _building = false;
-          return exitCode;
+          return executeActions(actions, arguments).then((int exitCode) {
+            if (exitCode != 0) {
+              return exitCode;
+            }
+
+            _date = new DateTime.now();
+            return executeActions(actionsAfter, arguments).then((int exitCode) {
+              if (_reusable) {
+                reset();
+              }
+
+              _building = false;
+              return exitCode;
+            });
+          });
         });
       });
     });

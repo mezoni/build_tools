@@ -63,7 +63,7 @@ class FileTarget extends Target {
     }
 
     var builder = Builder.current;
-    if(!sources.isEmpty) {
+    if (!sources.isEmpty) {
       if (builder.scriptDate != null) {
         if (date.compareTo(builder.scriptDate) < 0) {
           return false;
@@ -98,32 +98,44 @@ class FileTarget extends Target {
     return new Future<int>(() {
       var builder = Builder.current;
       var exitCode = 0;
-      return _FutureHelper.forEach(sources, (String source) {
-        return new Future<bool>(() {
-          var target = builder.resolveTarget(source);
-          if (target != null) {
-            return target.build().then((int result) {
-              if (result != 0) {
-                // Break loop.
-                exitCode = result;
-                return false;
-              }
-            });
-          }
-
-          if (!FileUtils.testfile(source, "exists")) {
-            logError("Source not found: $source");
-            exitCode = -1;
-            // Break loop.
-            return false;
-          }
-        });
-      }).then((result) {
+      return executeActions(actionsBefore, arguments).then((int exitCode) {
         if (exitCode != 0) {
           return exitCode;
         }
 
-        return executeActions(arguments);
+        return _FutureHelper.forEach(sources, (String source) {
+          return new Future<bool>(() {
+            var target = builder.resolveTarget(source);
+            if (target != null) {
+              return target.build().then((int result) {
+                if (result != 0) {
+                  // Break loop.
+                  exitCode = result;
+                  return false;
+                }
+              });
+            }
+
+            if (!FileUtils.testfile(source, "exists")) {
+              logError("Source not found: $source");
+              exitCode = -1;
+              // Break loop.
+              return false;
+            }
+          });
+        }).then((result) {
+          if (exitCode != 0) {
+            return exitCode;
+          }
+
+          return executeActions(actions, arguments).then((int exitCode) {
+            if (exitCode != 0) {
+              return exitCode;
+            }
+
+            return executeActions(actionsAfter, arguments);
+          });
+        });
       });
     });
   }
