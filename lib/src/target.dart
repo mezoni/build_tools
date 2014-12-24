@@ -49,18 +49,15 @@ void before(List<String> targets, TargetAction action) {
 /**
  * Creates the target.
  */
-void target(String name, Iterable<String> sources, TargetAction action, {String
-    description, bool reusable: false}) {
-  var target = new Target(name, action: action, description: description,
-      sources: sources, reusable: reusable);
+void target(String name, Iterable<String> sources, TargetAction action, {String description, bool reusable: false}) {
+  var target = new Target(name, action: action, description: description, sources: sources, reusable: reusable);
   Builder.current.addTarget(target);
 }
 
 /**
  * Creates the targets.
  */
-void targets(Iterable<String> names, Iterable<String> sources, TargetAction
-    action, {String description, bool reusable: false}) {
+void targets(Iterable<String> names, Iterable<String> sources, TargetAction action, {String description, bool reusable: false}) {
   for (var name in names) {
     target(name, sources, action, description: description, reusable: reusable);
   }
@@ -94,8 +91,7 @@ class Target {
 
   List<String> _sources;
 
-  Target(this.name, {TargetAction action, this.description, Iterable<String>
-      sources, bool reusable: false}) {
+  Target(this.name, {TargetAction action, this.description, Iterable<String> sources, bool reusable: false}) {
     if (name == null || name.isEmpty) {
       throw new ArgumentError("name: '$name'");
     }
@@ -194,95 +190,35 @@ class Target {
   /**
    * Builds the target if it out of date.
    */
-  Future<int> build([Map<String, dynamic> arguments]) {
-    return new Future<int>(() {
-      _logBeginBuild();
-      if (uptodate) {
-        _logUptodate();
-        return 0;
-      }
+  Future<int> build([Map<String, dynamic> arguments]) async {
+    _logBeginBuild();
+    if (uptodate) {
+      _logUptodate();
+      return 0;
+    }
 
-      return rebuild(arguments);
-    }).then((int exitCode) {
-      _logEndBuild();
-      return exitCode;
-    });
+    int exitCode = await rebuild(arguments);
+    _logEndBuild();
+    return exitCode;
   }
 
   /**
    * Executes the target actions.
    */
-  Future<int> executeActions(List<TargetAction> actions, Map<String, dynamic>
-      arguments) {
-    return new Future<int>(() {
-      if (arguments == null) {
-        arguments = <String, dynamic> {};
-      }
+  Future<int> executeActions(List<TargetAction> actions, Map<String, dynamic> arguments) async {
+    if (arguments == null) {
+      arguments = <String, dynamic>{};
+    }
 
-      var exitCode = 0;
-      var checkExitCode = (dynamic result) {
-        if (result is int && result != 0) {
-          logError("Target action failed ($result): '$name'");
-          exitCode = result;
-          return false;
-        }
-
-        return true;
-      };
-
-      return _FutureHelper.forEach(actions, (TargetAction action) {
-        return new Future<bool>(() {
-          var result = action(this, arguments);
-          if (result is Future) {
-            return result.then((result) {
-              return checkExitCode(result);
-            });
-          } else {
-            return checkExitCode(result);
-          }
-        });
-      }).then((result) {
+    for (var action in actions) {
+      var exitCode = await action(this, arguments);
+      if (exitCode is int && exitCode != 0) {
+        logError("Target action failed ($exitCode): '$name'");
         return exitCode;
-      });
-    });
-  }
-
-  /**
-   * Executes the target actions.
-   */
-  // TODO: remove
-  Future<int> executeActions_Old(Map<String, dynamic> arguments) {
-    return new Future<int>(() {
-      if (arguments == null) {
-        arguments = <String, dynamic> {};
       }
+    }
 
-      var exitCode = 0;
-      var checkExitCode = (dynamic result) {
-        if (result is int && result != 0) {
-          logError("Target action failed ($result): '$name'");
-          exitCode = result;
-          return false;
-        }
-
-        return true;
-      };
-
-      return _FutureHelper.forEach(actions, (TargetAction action) {
-        return new Future<bool>(() {
-          var result = action(this, arguments);
-          if (result is Future) {
-            return result.then((result) {
-              return checkExitCode(result);
-            });
-          } else {
-            return checkExitCode(result);
-          }
-        });
-      }).then((result) {
-        return exitCode;
-      });
-    });
+    return 0;
   }
 
   /**
@@ -299,66 +235,60 @@ class Target {
     Builder.current.logInfo(message);
   }
 
+
   /**
    * Rebuilds the target.
    */
-  Future<int> rebuild([Map<String, dynamic> arguments]) {
-    return new Future<int>(() {
-      var builder = Builder.current;
-      if (_building) {
-        logError("Recursive call of the target: '$name'");
+  Future<int> rebuild([Map<String, dynamic> arguments]) async {
+    var builder = Builder.current;
+    if (_building) {
+      logError("Recursive call of the target: '$name'");
+      return -1;
+    }
+
+    _building = true;
+    int exitCode = await executeActions(actionsBefore, arguments);
+    if (exitCode != 0) {
+      _building = false;
+      return exitCode;
+    }
+
+    for (var source in sources) {
+      var target = builder.resolveTarget(source);
+      if (target == null) {
+        logError("Cannot resolve target: '$source'");
+        _building = false;
         return -1;
       }
 
-      _building = true;
-      var exitCode = 0;
-      return executeActions(actionsBefore, arguments).then((int exitCode) {
-        if (exitCode != 0) {
-          return exitCode;
-        }
+      exitCode = await target.build();
+      if (exitCode != 0) {
+        _building = false;
+        return exitCode;
+      }
+    }
 
-        return _FutureHelper.forEach(sources, (String name) {
-          return new Future<bool>(() {
-            var target = builder.resolveTarget(name);
-            if (target == null) {
-              logError("Cannot resolve target: '$name'");
-              exitCode = -1;
-              // Break loop
-              return false;
-            }
+    exitCode = await executeActions(actions, arguments);
+    if (exitCode != 0) {
+      _building = false;
+      return exitCode;
+    }
 
-            return target.build().then((int result) {
-              exitCode = result;
-              if (exitCode != 0) {
-                // Break loop
-                return false;
-              }
-            });
-          });
-        }).then((result) {
-          if (exitCode != 0) {
-            return exitCode;
-          }
+    _date = new DateTime.now();
+    exitCode = await executeActions(actionsAfter, arguments);
+    if (exitCode != 0) {
+      _building = false;
+      return exitCode;
+    }
 
-          return executeActions(actions, arguments).then((int exitCode) {
-            if (exitCode != 0) {
-              return exitCode;
-            }
+    if (_reusable) {
+      reset();
+    }
 
-            _date = new DateTime.now();
-            return executeActions(actionsAfter, arguments).then((int exitCode) {
-              if (_reusable) {
-                reset();
-              }
-
-              _building = false;
-              return exitCode;
-            });
-          });
-        });
-      });
-    });
+    _building = false;
+    return 0;
   }
+
 
   /**
    * Resets the target to initial state.

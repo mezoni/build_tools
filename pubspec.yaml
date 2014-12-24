@@ -1,5 +1,5 @@
 name: build_tools
-version: 0.0.7
+version: 0.0.8
 author: Andrew Mezoni <andrew.mezoni@gmail.com>
 description: Build tools is a build automation tool with a built-in command line shell.
 homepage: https://github.com/mezoni/build_tools

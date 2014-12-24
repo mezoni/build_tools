@@ -7,11 +7,11 @@ void main() {
   var root = FileUtils.fullpath("..");
   var packages = FileUtils.glob(root + "/packages/**/*.dart");
 
-  file(FILELIST, packages, (Target t, Map args) {
+  file(FILELIST, packages, (Target t, Map args) async {
     var files = t.sources;
     files = files.map((e) => e.replaceFirst(root + "/", ""));
     files = files.join("\n");
-    new File(t.name).writeAsStringSync(files);
+    await new File(t.name).writeAsString(files);
   });
 
   target("default", [FILELIST], (Target t, Map args) {

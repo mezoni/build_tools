@@ -89,32 +89,30 @@ class Builder {
   /**
    * Builds the target.
    */
-  Future<int> build(String name, {Map<String, dynamic> arguments}) {
-    return new Future<int>(() {
-      lastError = null;
-      if (trace) {
-        logger.onRecord.listen((LogRecord rec) {
-          print('[${rec.level.name}] ${rec.message}');
-        });
-      }
+  Future<int> build(String name, {Map<String, dynamic> arguments}) async {
+    lastError = null;
+    if (trace) {
+      logger.onRecord.listen((LogRecord rec) {
+        print('[${rec.level.name}] ${rec.message}');
+      });
+    }
 
-      if (name == null) {
-        name = defaultTarget;
-      }
+    if (name == null) {
+      name = defaultTarget;
+    }
 
-      if (name == null) {
-        logError("Target not specified");
-        return -1;
-      }
+    if (name == null) {
+      logError("Target not specified");
+      return -1;
+    }
 
-      var target = resolveTarget(name);
-      if (target == null) {
-        logError("Target not found: $name");
-        return -1;
-      }
+    var target = resolveTarget(name);
+    if (target == null) {
+      logError("Target not found: $name");
+      return -1;
+   }
 
-      return target.build(arguments);
-    });
+    return await target.build(arguments);
   }
 
   /**

@@ -9,7 +9,6 @@ import "package:patsubst/patsubst.dart";
 
 part "src/builder.dart";
 part "src/file_target.dart";
-part "src/future_helper.dart";
 part "src/rule.dart";
 part "src/target.dart";
 part "src/target_action.dart";

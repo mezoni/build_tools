@@ -29,17 +29,14 @@ void file(String name, Iterable<String> sources, TargetAction action) {
 /**
  * Creates the targets which is responsible for creating the files.
  */
-void files(Iterable<String> names, Iterable<String> sources, TargetAction
-    action) {
+void files(Iterable<String> names, Iterable<String> sources, TargetAction action) {
   for (var name in names) {
     file(name, sources, action);
   }
 }
 
 class FileTarget extends Target {
-  FileTarget(String name, {TargetAction action, Iterable<String> sources}) :
-      super(name, action: action, sources: sources) {
-  }
+  FileTarget(String name, {TargetAction action, Iterable<String> sources}) : super(name, action: action, sources: sources);
 
   /**
    * Returns the date of file; otherwise null.
@@ -94,49 +91,45 @@ class FileTarget extends Target {
   /**
    * Rebuilds the target.
    */
-  Future<int> rebuild([Map<String, dynamic> arguments]) {
-    return new Future<int>(() {
-      var builder = Builder.current;
-      var exitCode = 0;
-      return executeActions(actionsBefore, arguments).then((int exitCode) {
+  Future<int> rebuild([Map<String, dynamic> arguments]) async {
+    var builder = Builder.current;
+    if (_building) {
+      logError("Recursive call of the target: '$name'");
+      return -1;
+    }
+
+    _building = true;
+    int exitCode = await executeActions(actionsBefore, arguments);
+    if (exitCode != 0) {
+      _building = false;
+      return exitCode;
+    }
+
+    for (var source in sources) {
+      var target = builder.resolveTarget(source);
+      if (target != null) {
+        exitCode = await target.build();
         if (exitCode != 0) {
+          _building = false;
           return exitCode;
         }
+      } else {
+        if (!FileUtils.testfile(source, "exists")) {
+          logError("Source not found: $source");
+          _building = false;
+          return exitCode = -1;
+        }
+      }
+    }
 
-        return _FutureHelper.forEach(sources, (String source) {
-          return new Future<bool>(() {
-            var target = builder.resolveTarget(source);
-            if (target != null) {
-              return target.build().then((int result) {
-                if (result != 0) {
-                  // Break loop.
-                  exitCode = result;
-                  return false;
-                }
-              });
-            }
+    exitCode = await executeActions(actions, arguments);
+    if (exitCode != 0) {
+      _building = false;
+      return exitCode;
+    }
 
-            if (!FileUtils.testfile(source, "exists")) {
-              logError("Source not found: $source");
-              exitCode = -1;
-              // Break loop.
-              return false;
-            }
-          });
-        }).then((result) {
-          if (exitCode != 0) {
-            return exitCode;
-          }
-
-          return executeActions(actions, arguments).then((int exitCode) {
-            if (exitCode != 0) {
-              return exitCode;
-            }
-
-            return executeActions(actionsAfter, arguments);
-          });
-        });
-      });
-    });
+    exitCode = await executeActions(actionsAfter, arguments);
+    _building = false;
+    return exitCode;
   }
 }

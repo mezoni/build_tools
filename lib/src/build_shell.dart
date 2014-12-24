@@ -16,21 +16,18 @@ class BuildShell {
     return _run(arguments);
   }
 
-  Future<int> _build(String name, Map arguments) {
-    return new Future<int>(() {
-      var builder = Builder.current;
-      var script = Platform.script.toFilePath();
-      builder.scriptDate = FileStat.statSync(script).modified;
-      return Builder.current.build(name, arguments: arguments).then((exitCode) {
-        if (exitCode != 0) {
-          if (builder.lastError != null) {
-            print(builder.lastError);
-          }
-        }
+  Future<int> _build(String name, Map arguments) async {
+    var builder = Builder.current;
+    var script = Platform.script.toFilePath();
+    builder.scriptDate = FileStat.statSync(script).modified;
+    int exitCode = await builder.build(name, arguments: arguments);
+    if (exitCode != 0) {
+      if (builder.lastError != null) {
+        print(builder.lastError);
+      }
+    }
 
-        return exitCode;
-      });
-    });
+    return exitCode;
   }
 
   void _displayTargetList() {
@@ -90,7 +87,7 @@ class BuildShell {
   void _displayUsage() {
     var indent = "  ";
     var script = Platform.script.toFilePath();
-    var usage = _argParser.getUsage().split("\n").join("\n$indent");
+    var usage = _argParser.usage.split("\n").join("\n$indent");
     script = FileUtils.basename(script);
     print("Usage: $script [options] target [arguments]");
     print("Options:");
