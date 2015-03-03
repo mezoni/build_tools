@@ -18,8 +18,13 @@ class BuildShell {
 
   Future<int> _build(String name, Map arguments) async {
     var builder = Builder.current;
-    var script = Platform.script.toFilePath();
-    builder.scriptDate = FileStat.statSync(script).modified;
+    var script = Platform.script;
+    if (script.scheme == "file") {
+      builder.scriptDate = FileStat.statSync(script.toFilePath()).modified;
+    } else {
+      builder.scriptDate = new DateTime.now();
+    }
+
     int exitCode = await builder.build(name, arguments: arguments);
     if (exitCode != 0) {
       if (builder.lastError != null) {
