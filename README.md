@@ -13,6 +13,64 @@ Without using the command line shell the configuration is performed directly in 
 
 [Example of usage `build_tools` for bulding the Dart VM C++ native extension.][native_extension_with_build_tools]
 
+Short example:
+
+```dart
+import "dart:async";
+import "dart:io";
+import "package:build_tools/build_shell.dart";
+import "package:build_tools/build_tools.dart";
+
+Future main(List args) async {
+  target("default", ["breakfast"], (t, args) {
+    print("Very good!");
+  });
+
+  target("breakfast", ["eat sandwich", "drink coffee"], (t, args) {
+    print(t.name);
+  });
+
+  target("drink coffee", ["make coffee"], (t, args) {
+    print(t.name);
+  });
+
+  target("eat sandwich", ["make sandwich"], (t, args) {
+    print(t.name);
+  });
+
+  target("make coffee", [], (t, args) {
+    print(t.name);
+  });
+
+  target("make sandwich", ["take bread", "take sausage"], (t, args) {
+    print(t.name);
+  });
+
+  target("take bread", [], (t, args) {
+    print(t.name);
+  });
+
+  target("take sausage", [], (t, args) {
+    print(t.name);
+  });
+
+  exit(await new BuildShell().run(args));
+}
+```
+
+Output:
+
+```
+take bread
+take sausage
+make sandwich
+eat sandwich
+make coffee
+drink coffee
+breakfast
+Very good!
+```
+
 Short list of features:
 
 **Targets (tasks)**
@@ -21,7 +79,7 @@ The targets describes the tasks and their dependencies (sources).
 
 ```dart
 target("build", ["compile", "link"], (Target t, Map args) {
-  // build  
+  // build after compile and link  
 });
 ```
 
@@ -66,13 +124,14 @@ The rules automatically generates the targets by specified patterns.
 
 ```dart
 rule("%.o", ["%.cc"], (Target t, Map args) {
-  // compile
+  // compile %.cc => %.obj 
 });
 ```
 
 ```dart
 rules(["%.html", "%.htm"], ["%.md"], (Target t, Map args) {
-  // transform
+  // transform %.html => %.md
+  // transform %.htm => %.md
 });
 ```
 
@@ -97,7 +156,7 @@ before(["compile", "link"], (Target t, Map args) {
 The built-in `build shell` allows use the build scripts as command line scripts.
 
 ```dart
-new BuildShell().run(args).then((exitCode) => exit(exitCode));
+exit(await new BuildShell().run(args));
 ```
 
 [native_extension_with_build_tools]: https://github.com/mezoni/native_extension_with_build_tools
