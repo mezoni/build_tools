@@ -30,6 +30,14 @@ Future main(List args) async {
     print(t.name);
   });
 
+  before(["breakfast"], (t, args) {
+    print("wash hands before ${t.name}");
+  });
+
+  after(["breakfast"], (t, args) {
+    print("smoke a cigar after ${t.name}");
+  });
+
   target("drink coffee", ["make coffee"], (t, args) {
     print(t.name);
   });
@@ -61,6 +69,7 @@ Future main(List args) async {
 Output:
 
 ```
+wash hands before breakfast
 take bread
 take sausage
 make sandwich
@@ -68,6 +77,7 @@ eat sandwich
 make coffee
 drink coffee
 breakfast
+smoke a cigar after breakfast
 Very good!
 ```
 

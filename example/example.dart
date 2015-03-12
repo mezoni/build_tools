@@ -12,6 +12,14 @@ Future main(List args) async {
     print(t.name);
   });
 
+  before(["breakfast"], (t, args) {
+    print("wash hands before ${t.name}");
+  });
+
+  after(["breakfast"], (t, args) {
+    print("smoke a cigar after ${t.name}");
+  });
+
   target("drink coffee", ["make coffee"], (t, args) {
     print(t.name);
   });

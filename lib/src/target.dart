@@ -39,7 +39,7 @@ void before(List<String> targets, TargetAction action) {
   for (var name in targets) {
     var target = builder.targets[name];
     if (target == null) {
-      throw new ArgumentError("Target not found: $target");
+      throw new ArgumentError("Target not found: '$name'");
     }
 
     target._actionsBefore.add(action);
