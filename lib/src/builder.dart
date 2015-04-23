@@ -4,15 +4,23 @@ part of build_tools;
  * Target builder.
  */
 class Builder {
+  static Builder _current;
+
   /**
    * Current builder.
    */
-  static final Builder current = new Builder();
+  static Builder get current {
+    if (_current == null) {
+      _current = new Builder();
+    }
+
+    return _current;
+  }
 
   /**
    * Arguments of the main target.
    */
-  Map<String, dynamic> arguments = <String, dynamic> {};
+  Map<String, dynamic> arguments = <String, dynamic>{};
 
   /**
    * Default target name.
@@ -38,6 +46,8 @@ class Builder {
    * Trace flag.
    */
   bool trace = false;
+
+  bool _running = false;
 
   List<Rule> _rules = new List<Rule>();
 
@@ -91,6 +101,7 @@ class Builder {
    */
   Future<int> build(String name, {Map<String, dynamic> arguments}) async {
     lastError = null;
+    _running = true;
     if (trace) {
       logger.onRecord.listen((LogRecord rec) {
         print('[${rec.level.name}] ${rec.message}');
@@ -110,9 +121,11 @@ class Builder {
     if (target == null) {
       logError("Target not found: $name");
       return -1;
-   }
+    }
 
-    return await target.build(arguments);
+    var result = await target.build(arguments);
+    _running = false;
+    return result;
   }
 
   /**
@@ -155,5 +168,13 @@ class Builder {
     }
 
     return target;
+  }
+
+  static void reset() {
+    if (_current != null && _current._running) {
+      throw new StateError("Unable to reset when the builder running");
+    }
+
+    _current = null;
   }
 }
