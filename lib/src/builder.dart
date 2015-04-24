@@ -7,6 +7,11 @@ class Builder {
   static Builder _current;
 
   /**
+   * Permanent object which can be used to locking.
+   */
+  static final Object lock = new Object();
+
+  /**
    * Current builder.
    */
   static Builder get current {
@@ -47,13 +52,11 @@ class Builder {
    */
   bool trace = false;
 
-  bool _running = false;
+  int _running = 0;
 
   List<Rule> _rules = new List<Rule>();
 
   Map<String, Target> _targets = new Map<String, Target>();
-
-  bool _scheduled = false;
 
   /**
    * Returns the rules.
@@ -101,7 +104,7 @@ class Builder {
    */
   Future<int> build(String name, {Map<String, dynamic> arguments}) async {
     lastError = null;
-    _running = true;
+    _running++;
     if (trace) {
       logger.onRecord.listen((LogRecord rec) {
         print('[${rec.level.name}] ${rec.message}');
@@ -124,7 +127,7 @@ class Builder {
     }
 
     var result = await target.build(arguments);
-    _running = false;
+    _running--;
     return result;
   }
 
@@ -171,7 +174,7 @@ class Builder {
   }
 
   static void reset() {
-    if (_current != null && _current._running) {
+    if (_current != null && _current._running != 0) {
       throw new StateError("Unable to reset when the builder running");
     }
 
