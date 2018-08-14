@@ -11,8 +11,8 @@ void rule(String target, Iterable<String> sources, TargetAction action) {
 /**
  * Creates the rules.
  */
-void rules(Iterable<String> targets, Iterable<String> sources, TargetAction
-    action) {
+void rules(
+    Iterable<String> targets, Iterable<String> sources, TargetAction action) {
   for (var target in targets) {
     rule(target, sources, action);
   }
@@ -35,8 +35,7 @@ class Rule {
 
   PatSubst _targetMatcher;
 
-  Rule(this.target, {this.action, Iterable<String>
-      sources}) {
+  Rule(this.target, {this.action, Iterable<String> sources}) {
     if (target == null) {
       throw new ArgumentError("target: $target");
     }

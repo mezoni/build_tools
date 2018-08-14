@@ -49,15 +49,22 @@ void before(List<String> targets, TargetAction action) {
 /**
  * Creates the target.
  */
-void target(String name, Iterable<String> sources, TargetAction action, {String description, bool reusable: false}) {
-  var target = new Target(name, action: action, description: description, sources: sources, reusable: reusable);
+void target(String name, Iterable<String> sources, TargetAction action,
+    {String description, bool reusable: false}) {
+  var target = new Target(name,
+      action: action,
+      description: description,
+      sources: sources,
+      reusable: reusable);
   Builder.current.addTarget(target);
 }
 
 /**
  * Creates the targets.
  */
-void targets(Iterable<String> names, Iterable<String> sources, TargetAction action, {String description, bool reusable: false}) {
+void targets(
+    Iterable<String> names, Iterable<String> sources, TargetAction action,
+    {String description, bool reusable: false}) {
   for (var name in names) {
     target(name, sources, action, description: description, reusable: reusable);
   }
@@ -91,7 +98,11 @@ class Target {
 
   List<String> _sources;
 
-  Target(this.name, {TargetAction action, this.description, Iterable<String> sources, bool reusable: false}) {
+  Target(this.name,
+      {TargetAction action,
+      this.description,
+      Iterable<String> sources,
+      bool reusable: false}) {
     if (name == null || name.isEmpty) {
       throw new ArgumentError("name: '$name'");
     }
@@ -205,7 +216,8 @@ class Target {
   /**
    * Executes the target actions.
    */
-  Future<int> executeActions(List<TargetAction> actions, Map<String, dynamic> arguments) async {
+  Future<int> executeActions(
+      Iterable<TargetAction> actions, Map<String, dynamic> arguments) async {
     if (arguments == null) {
       arguments = <String, dynamic>{};
     }
@@ -234,7 +246,6 @@ class Target {
   void logInfo(String message) {
     Builder.current.logInfo(message);
   }
-
 
   /**
    * Rebuilds the target.
@@ -288,7 +299,6 @@ class Target {
     _building = false;
     return 0;
   }
-
 
   /**
    * Resets the target to initial state.

@@ -25,7 +25,8 @@ class BuildShell {
       builder.scriptDate = new DateTime.now();
     }
 
-    int exitCode = await builder.build(name, arguments: arguments);
+    int exitCode =
+        await builder.build(name, arguments: arguments as Map<String, dynamic>);
     if (exitCode != 0) {
       if (builder.lastError != null) {
         print(builder.lastError);
@@ -117,10 +118,10 @@ class BuildShell {
 
   bool _parse(List<String> args) {
     _argParser = new ArgParser();
-    _argParser.addFlag("list", help: "List available targets.", negatable: false
-        );
-    _argParser.addFlag("trace", help: "Trace building process.", negatable:
-        false);
+    _argParser.addFlag("list",
+        help: "List available targets.", negatable: false);
+    _argParser.addFlag("trace",
+        help: "Trace building process.", negatable: false);
 
     ArgResults argResults;
     try {
@@ -131,8 +132,8 @@ class BuildShell {
       return false;
     }
 
-    Builder.current.trace = argResults["trace"];
-    if (argResults["list"]) {
+    Builder.current.trace = argResults["trace"] as bool;
+    if (argResults["list"] as bool) {
       _displayTargetList();
       return false;
     }
@@ -174,7 +175,7 @@ class BuildShell {
   }
 
   void _reset() {
-    _arguments = <String, dynamic> {};
+    _arguments = <String, dynamic>{};
     _exitCode = 0;
     _targetName = null;
   }

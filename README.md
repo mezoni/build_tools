@@ -21,7 +21,7 @@ import "dart:io";
 import "package:build_tools/build_shell.dart";
 import "package:build_tools/build_tools.dart";
 
-Future main(List args) async {
+Future main(List<String> args) async {
   target("default", ["breakfast"], (t, args) {
     print("Very good!");
   });

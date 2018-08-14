@@ -29,14 +29,16 @@ void file(String name, Iterable<String> sources, TargetAction action) {
 /**
  * Creates the targets which is responsible for creating the files.
  */
-void files(Iterable<String> names, Iterable<String> sources, TargetAction action) {
+void files(
+    Iterable<String> names, Iterable<String> sources, TargetAction action) {
   for (var name in names) {
     file(name, sources, action);
   }
 }
 
 class FileTarget extends Target {
-  FileTarget(String name, {TargetAction action, Iterable<String> sources}) : super(name, action: action, sources: sources);
+  FileTarget(String name, {TargetAction action, Iterable<String> sources})
+      : super(name, action: action, sources: sources);
 
   /**
    * Returns the date of file; otherwise null.
